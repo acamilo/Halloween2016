@@ -12,11 +12,12 @@
 
 int loop_cnt=0;
 
-byte accx,accy,accz,zbut,cbut,joyx,joyy;
+int accx,accy,accz,zbut,cbut,joyx,joyy;
 int ledPin = 13;
 
 Servo eyepan;
 Servo eyetilt;
+Servo jaw;
 void setup()
 {
     Serial.begin(19200);
@@ -24,21 +25,18 @@ void setup()
 
     nunchuck_setpowerpins();
     nunchuck_init(); // send the initilization handshake
-    eyepan.attach(D3);
-    eyetilt.attach(D6);
-    
+    eyepan.attach(D6);
+    eyetilt.attach(D4);
+    jaw.attach(D3);
     Serial.print("WiiChuckDemo ready\n");
 }
 // 130 50
 
 void loop()
 {
-char i=50;
-
    
-    if( loop_cnt > 100 ) { // every 100 msecs get new data
+    if( loop_cnt > 20 ) { // every 20 msecs get new data
         loop_cnt = 0;
-
         nunchuck_get_data();
 
         accx  = nunchuck_accelx(); // ranges from approx 70 - 182
@@ -46,16 +44,26 @@ char i=50;
         accz  = nunchuck_accelz(); // ranges from approx 65 - 173
         zbut = nunchuck_zbutton();
         cbut = nunchuck_cbutton(); 
-        joyx = nunchuck_joyx();
-        joyy = nunchuck_joyy();
-        
-                  eyetilt.write(joyx);
-          eyepan.write(joyy);    
-        Serial.print("accx: "); Serial.print((byte)accx,DEC);
-        Serial.print("\taccy: "); Serial.print((byte)accy,DEC);
-        Serial.print("\taccy: "); Serial.print((byte)accz,DEC);
-        Serial.print("\tzbut: "); Serial.print((byte)zbut,DEC);
-        Serial.print("\tcbut: "); Serial.println((byte)cbut,DEC);
+        joyy = 255-nunchuck_joyx()-40;
+        joyx = 255-nunchuck_joyy()-20;
+        if(joyx>160)
+          joyx=160;
+        if(joyy>160)
+          joyy=160;
+          
+        if(joyx<25)
+          joyx=24;
+        if(joyy<25)
+          joyy=24;  
+          
+        eyetilt.write(joyx);
+        eyepan.write(joyy);  
+        jaw.write(zbut?70:20); 
+        //Serial.print("accx: "); Serial.print((byte)accx,DEC);
+        //Serial.print("\taccy: "); Serial.print((byte)accy,DEC);
+        //Serial.print("\taccy: "); Serial.print((byte)accz,DEC);
+        //Serial.print("\tzbut: "); Serial.print((byte)zbut,DEC);
+        //Serial.print("\tcbut: "); Serial.println((byte)cbut,DEC);
     }
     loop_cnt++;
     delay(1);
